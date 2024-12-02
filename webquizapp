@@ -1,28 +1,32 @@
 <?php
-
+// Start the session
 session_start();
 
+// Initialize game settings and state
 if (!isset($_SESSION['settings'])) {
     $_SESSION['settings'] = [
-        'level' => 1, 
-        'custom_min' => 1, 
-        'custom_max' => 10, 
+        'level' => 1, // Default level
+        'custom_min' => 1, // Custom range min
+        'custom_max' => 10, // Custom range max
     ];
 }
 
 if (!isset($_SESSION['game_state'])) {
     resetGame();
+}
 
+// Reset game state
 function resetGame() {
     $_SESSION['game_state'] = [
         'current_question' => 1,
         'correct' => 0,
         'wrong' => 0,
-        'questions' => [],
+        'questions' => [], // Store past questions
         'current_question_data' => null,
     ];
 }
 
+// Generate a random math question
 function generateQuestion() {
     $level = $_SESSION['settings']['level'];
     $min = ($level == 1) ? 1 : 11;
@@ -33,12 +37,15 @@ function generateQuestion() {
         $max = $_SESSION['settings']['custom_max'];
     }
 
+    // Generate two random numbers
     $num1 = rand($min, $max);
     $num2 = rand($min, $max);
 
-    $operators = ['+', '-', '*', '/'];
+    // Choose a random operator
+    $operators = ['+', '-', '*'];
     $operator = $operators[array_rand($operators)];
 
+    // Calculate the correct answer
     switch ($operator) {
         case '+':
             $correctAnswer = $num1 + $num2;
@@ -49,12 +56,9 @@ function generateQuestion() {
         case '*':
             $correctAnswer = $num1 * $num2;
             break;
-        case '/':
-            $num1 = $num1 * $num2;
-            $correctAnswer = $num1 / $num2;
-            break;
     }
 
+    // Generate options including the correct answer
     $options = [$correctAnswer];
     while (count($options) < 4) {
         $fakeAnswer = rand($correctAnswer - 10, $correctAnswer + 10);
@@ -64,6 +68,7 @@ function generateQuestion() {
     }
     shuffle($options);
 
+    // Store the question data
     $_SESSION['game_state']['current_question_data'] = [
         'num1' => $num1,
         'num2' => $num2,
@@ -73,7 +78,9 @@ function generateQuestion() {
     ];
 }
 
+// Handle game logic
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Handle level settings
     if (isset($_POST['level'])) {
         $_SESSION['settings']['level'] = $_POST['level'];
         if ($_POST['level'] == 'custom') {
@@ -84,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         generateQuestion();
     }
 
+    // Handle answer submission
     if (isset($_POST['answer'])) {
         $selectedAnswer = intval($_POST['answer']);
         $correctAnswer = $_SESSION['game_state']['current_question_data']['correct_answer'];
@@ -94,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['game_state']['wrong']++;
         }
 
+        // Move to the next question
         $_SESSION['game_state']['current_question']++;
         if ($_SESSION['game_state']['current_question'] <= 10) {
             generateQuestion();
@@ -102,16 +111,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Handle game reset
     if (isset($_POST['reset'])) {
         resetGame();
         generateQuestion();
     }
 }
 
+// Generate the first question if not already generated
 if (!isset($_SESSION['game_state']['current_question_data'])) {
     generateQuestion();
 }
 
+// Get current question data
 $questionData = $_SESSION['game_state']['current_question_data'];
 ?>
 
