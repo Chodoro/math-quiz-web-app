@@ -1,1 +1,26 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background-color: aquamarine;
+}
 
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.question {
+    margin: 20px 0;
+}
+
+.options button {
+    display: inline-block;
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+.settings {
+    margin: 20px 0;
+}
