@@ -135,5 +135,50 @@ $questionData = $_SESSION['game_state']['current_question_data'];
     <title>Math Quiz Game</title>
 </head>
 <body>
+<div class="container">
+        <h1>Math Quiz Game</h1>
+
+        <?php if (!isset($_SESSION['game_state']['quiz_over'])): ?>
+            <div class="question">
+                <p>Question <?= $_SESSION['game_state']['current_question'] ?> of 10</p>
+                <p><strong><?= $questionData['num1'] ?> <?= $questionData['operator'] ?> <?= $questionData['num2'] ?> = ?</strong></p>
+            </div>
+            <form method="POST">
+                <div class="options">
+                    <?php foreach ($questionData['options'] as $option): ?>
+                        <button type="submit" name="answer" value="<?= $option ?>"><?= $option ?></button>
+                    <?php endforeach; ?>
+                </div>
+            </form>
+        <?php else: ?>
+            <div class="results">
+                <p><strong>Quiz Over!</strong></p>
+                <p>Correct Answers: <?= $_SESSION['game_state']['correct'] ?></p>
+                <p>Wrong Answers: <?= $_SESSION['game_state']['wrong'] ?></p>
+                <p>Score: <?= round(($_SESSION['game_state']['correct'] / 10) * 100, 2) ?>%</p>
+                <form method="POST">
+                    <button type="submit" name="reset">Restart Game</button>
+                </form>
+            </div>
+        <?php endif; ?>
+
+        <div class="settings">
+            <h3>Settings</h3>
+            <form method="POST">
+                <label>
+                    <input type="radio" name="level" value="1" <?= ($_SESSION['settings']['level'] == 1) ? 'checked' : '' ?>> Level 1 (1-10)
+                </label><br>
+                <label>
+                    <input type="radio" name="level" value="2" <?= ($_SESSION['settings']['level'] == 2) ? 'checked' : '' ?>> Level 2 (11-100)
+                </label><br>
+                <label>
+                    <input type="radio" name="level" value="custom" <?= ($_SESSION['settings']['level'] == 'custom') ? 'checked' : '' ?>> Custom Level
+                </label><br>
+                <input type="number" name="custom_min" value="<?= $_SESSION['settings']['custom_min'] ?>" placeholder="Min">
+                <input type="number" name="custom_max" value="<?= $_SESSION['settings']['custom_max'] ?>" placeholder="Max"><br>
+                <button type="submit">Save Settings</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
