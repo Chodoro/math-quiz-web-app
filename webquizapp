@@ -1,0 +1,116 @@
+<?php
+
+session_start();
+
+if (!isset($_SESSION['settings'])) {
+    $_SESSION['settings'] = [
+        'level' => 1, 
+        'custom_min' => 1, 
+        'custom_max' => 10, 
+    ];
+}
+
+if (!isset($_SESSION['game_state'])) {
+    resetGame();
+
+function resetGame() {
+    $_SESSION['game_state'] = [
+        'current_question' => 1,
+        'correct' => 0,
+        'wrong' => 0,
+        'questions' => [],
+        'current_question_data' => null,
+    ];
+}
+
+function generateQuestion() {
+    $level = $_SESSION['settings']['level'];
+    $min = ($level == 1) ? 1 : 11;
+    $max = ($level == 1) ? 10 : 100;
+
+    if ($level == 'custom') {
+        $min = $_SESSION['settings']['custom_min'];
+        $max = $_SESSION['settings']['custom_max'];
+    }
+
+    $num1 = rand($min, $max);
+    $num2 = rand($min, $max);
+
+    $operators = ['+', '-', '*', '/'];
+    $operator = $operators[array_rand($operators)];
+
+    switch ($operator) {
+        case '+':
+            $correctAnswer = $num1 + $num2;
+            break;
+        case '-':
+            $correctAnswer = $num1 - $num2;
+            break;
+        case '*':
+            $correctAnswer = $num1 * $num2;
+            break;
+        case '/':
+            $num1 = $num1 * $num2;
+            $correctAnswer = $num1 / $num2;
+            break;
+    }
+
+    $options = [$correctAnswer];
+    while (count($options) < 4) {
+        $fakeAnswer = rand($correctAnswer - 10, $correctAnswer + 10);
+        if ($fakeAnswer != $correctAnswer && !in_array($fakeAnswer, $options)) {
+            $options[] = $fakeAnswer;
+        }
+    }
+    shuffle($options);
+
+    $_SESSION['game_state']['current_question_data'] = [
+        'num1' => $num1,
+        'num2' => $num2,
+        'operator' => $operator,
+        'correct_answer' => $correctAnswer,
+        'options' => $options,
+    ];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['level'])) {
+        $_SESSION['settings']['level'] = $_POST['level'];
+        if ($_POST['level'] == 'custom') {
+            $_SESSION['settings']['custom_min'] = intval($_POST['custom_min']);
+            $_SESSION['settings']['custom_max'] = intval($_POST['custom_max']);
+        }
+        resetGame();
+        generateQuestion();
+    }
+
+    if (isset($_POST['answer'])) {
+        $selectedAnswer = intval($_POST['answer']);
+        $correctAnswer = $_SESSION['game_state']['current_question_data']['correct_answer'];
+
+        if ($selectedAnswer === $correctAnswer) {
+            $_SESSION['game_state']['correct']++;
+        } else {
+            $_SESSION['game_state']['wrong']++;
+        }
+
+        $_SESSION['game_state']['current_question']++;
+        if ($_SESSION['game_state']['current_question'] <= 10) {
+            generateQuestion();
+        } else {
+            $_SESSION['game_state']['quiz_over'] = true;
+        }
+    }
+
+    if (isset($_POST['reset'])) {
+        resetGame();
+        generateQuestion();
+    }
+}
+
+if (!isset($_SESSION['game_state']['current_question_data'])) {
+    generateQuestion();
+}
+
+$questionData = $_SESSION['game_state']['current_question_data'];
+?>
